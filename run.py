@@ -63,6 +63,7 @@ def validate(dataloader, model, loss_fn):
 
 
 def optimize(train_dataloader, valid_dataloader, model, loss_fn, optimizer, nb_epochs):
+
     # Lists to store losses for all the epochs.
     train_losses = []
     valid_losses = []

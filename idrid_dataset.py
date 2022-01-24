@@ -47,12 +47,20 @@ class dataset(Dataset):
             return image  # If train != True, return image.
 
 
-def get_weight(data_lebel):
-    data_lebel["level"].replace({2: 1, 3: 1, 4: 1}, inplace=True)
-    data_lebel = data_lebel.reset_index()
-    class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1]),
-                                                      y=data_lebel['level'].values)
-    class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+def get_weight(data_lebel, n_classes=2):
+    if n_classes == 2:
+        data_lebel["level"].replace({2: 1, 3: 1, 4: 1}, inplace=True)
+        data_lebel = data_lebel.reset_index()
+        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1]),
+                                                          y=data_lebel['level'].values)
+        class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+    if n_classes == 4:
+
+        data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+        data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
+        data_lebel = data_lebel.reset_index()
+        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1, 2, 3]), y=data_lebel['level'].values)
+        class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
     return class_weights
 
 
@@ -100,6 +108,44 @@ def get_data_loader_2_classes(path, data_lebel, size):
 
 
 
+
+def get_data_loader_4_classes(path, data_lebel, size):
+
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+    data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
+    train_df = data_lebel.reset_index()
+    data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
+
+    train_size = int(0.8 * len(data_set))
+    val_size = len(data_set) - train_size
+
+    train_set, valid_set = torch.utils.data.random_split(data_set, [train_size, val_size],
+                                                         generator=torch.Generator().manual_seed(42))
+    train = DataLoader(train_set, batch_size=config.BATCH, shuffle=True)
+    valid = DataLoader(valid_set, batch_size=config.BATCH, shuffle=False)
+
+    return train, valid
+
+
+
+
+def get_test_dataset_4_classes(path, data_lebel, size):
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+    data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
+
+    data_lebel = data_lebel.reset_index()
+    data_set = dataset(data_lebel, f'{path}test', image_transform=test_transform)
+    test = DataLoader(data_set, batch_size=config.BATCH, shuffle=False)
+    return test
 
 
 def get_test_dataset_2_classes(path, data_lebel, size):

@@ -1,6 +1,6 @@
 import torch
 
 DEVICE =torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-LR = 0.0001
+LR = 0.0003
 BATCH = 10
-EPOCHS = 50
+EPOCHS = 100
