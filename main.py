@@ -48,6 +48,6 @@ def test_model_2(model, size):
 
 
 if __name__ == '__main__':
-  # best result binary
+  # best result binary 82.52
     model = model.get_densenet121_2_classes()
     test_model(model, 'models/model1024_binary.pt')
