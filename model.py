@@ -71,20 +71,65 @@ def get_densenet121(class_weights):
     return densenet121
 
 
-def get_inception_v3(class_weights):
-    model = models.resnet50(pretrained=True)
+
+
+
+def get_vgg11_binary():
+    model = models.vgg11(pretrained=True)
 
     for param in model.parameters():
         param.requires_grad = False
 
     model.classifier = nn.Sequential(
-        nn.Linear(1024, 256),
+
+        nn.Linear(512 * 7 * 7, 4096),
         nn.ReLU(),
-        nn.Dropout(0.4),
-        nn.Linear(256, 5),
+        nn.Dropout(0.2),
+
+        nn.Linear(4096, 1024),
+        nn.ReLU(),
+        nn.Dropout(0.1),
+
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Dropout(0.1),
+
+
+        nn.Linear(512, 2),
+
+
     )
     model.cuda()
-    torch.nn.CrossEntropyLoss()
-    torch.optim.Adam(model.parameters(), lr=config.LR)
+
+    return model
+
+
+
+def get_vgg11_mc():
+    model = models.vgg11(pretrained=True)
+
+    for param in model.parameters():
+        param.requires_grad = False
+
+    model.classifier = nn.Sequential(
+
+        nn.Linear(512 * 7 * 7, 4096),
+        nn.ReLU(),
+        nn.Dropout(0.2),
+
+        nn.Linear(4096, 1024),
+        nn.ReLU(),
+        nn.Dropout(0.1),
+
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Dropout(0.1),
+
+
+        nn.Linear(512, 4),
+
+
+    )
+    model.cuda()
 
     return model
