@@ -1,6 +1,7 @@
 
 from torchvision.transforms import transforms
 import PIL.Image as Image
+from torch.utils.data import ConcatDataset
 import torch
 from sklearn.utils import class_weight
 from torch.utils.data import (
@@ -54,18 +55,18 @@ def do_augmentation(data, path):
             plt.imsave('augmentation/4_' + str(i) + '_augmentation.jpg', np.flipud(x[i]))
             plt.imsave('augmentation/5_' + str(i) + '_augmentation.jpg', random_noise(x[i], var=0.2 ** 2))
 
-            augmentation_dict['1_' + str(i) + '_augmentation.jpg'] = y[i]
-            augmentation_dict['2_' + str(i) + '_augmentation.jpg'] = y[i]
-            augmentation_dict['3_' + str(i) + '_augmentation.jpg'] = y[i]
-            augmentation_dict['4_' + str(i) + '_augmentation.jpg'] = y[i]
-            augmentation_dict['5_' + str(i) + '_augmentation.jpg'] = y[i]
+            augmentation_dict['1_' + str(i) + '_augmentation'] = y[i]
+            augmentation_dict['2_' + str(i) + '_augmentation'] = y[i]
+            augmentation_dict['3_' + str(i) + '_augmentation'] = y[i]
+            augmentation_dict['4_' + str(i) + '_augmentation'] = y[i]
+            augmentation_dict['5_' + str(i) + '_augmentation'] = y[i]
 
             augmentation_cnt[y[i]] = augmentation_cnt[y[i]] + 5
 
     data_items = augmentation_dict.items()
     data_list = list(data_items)
     df = pd.DataFrame(data_list, columns=['id_code', 'level'])
-    df.to_csv('augmentation_test.csv', index=False)
+    df.to_csv('augmentation.csv', index=False)
 
 
 
@@ -115,6 +116,9 @@ def get_weight(data_lebel, n_classes=2, graph=False, data_aug=None):
                                                           y=data_lebel['level'].values)
         class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
     if n_classes == 4:
+
+        if not (data_aug is None):
+            data_lebel = pd.concat([data_lebel, data_aug])
 
         data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
         data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
@@ -191,7 +195,7 @@ def get_data_loader_2_classes(path, data_lebel, size):
 
 
 
-def get_data_loader_4_classes(path, data_lebel, size):
+def get_data_loader_4_classes(path, data_lebel, size, aug = None,  aug_path=None):
 
     test_transform = transforms.Compose([transforms.Resize([size, size]),
                                          transforms.ToTensor(),
@@ -200,10 +204,26 @@ def get_data_loader_4_classes(path, data_lebel, size):
 
     data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
     data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
-    train_df = data_lebel.reset_index()
 
 
-    data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
+    aug.drop(aug.loc[aug['level'] == 0].index, inplace=True)
+    aug["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
+
+    data_lebel.reset_index(inplace=True)
+    aug.reset_index(inplace=True)
+
+    #train_df = pd.concat([data_lebel, aug])
+
+
+    data_set = dataset(data_lebel, f'{path}train', image_transform=test_transform)
+
+    data_set_aug = dataset(aug, f'{aug_path}', image_transform=test_transform)
+
+
+    data_set = ConcatDataset([data_set_aug, data_set])
+
+
+
 
     train_size = int(0.9 * len(data_set))
     val_size = len(data_set) - train_size

@@ -90,10 +90,15 @@ def do_mc():
 
     for x in [1024]:
         print(x)
-        data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
-        class_weights = idrid_dataset.get_weight(data_lebel, n_classes=4, graph=True)
 
-        train, valid = idrid_dataset.get_data_loader_4_classes(path, data_lebel, x)
+        data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
+
+        data_augmentation = pd.read_csv('augmentation.csv')
+
+        class_weights = idrid_dataset.get_weight(data_lebel, n_classes=4, graph=True, data_aug=data_augmentation)
+
+
+        train, valid = idrid_dataset.get_data_loader_4_classes(path, data_lebel, x, aug = data_augmentation,  aug_path='augmentation')
 
         classificador = model.get_vgg16_mc()
         criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
@@ -116,10 +121,11 @@ def do_mc():
 
 
 if __name__ == '__main__':
-    data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
-    data_augmentation = pd.read_csv('augmentation_test.csv')
-    class_weights = idrid_dataset.get_weight(data_lebel, n_classes=0, graph=True, data_aug=data_augmentation)
+
+
+    do_mc()
+
     #data = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
     #path = '/home/thiago/PycharmProjects/datasets/IDRI_teste/500/train/'
     #idrid_dataset.do_augmentation(data, path)
-    #do_mc()
+    #
