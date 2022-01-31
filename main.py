@@ -63,10 +63,10 @@ def do_binary():
     class_weights = idrid_dataset.get_weight(data_lebel, n_classes=2)
 
 
-    for x in [512, 1024]:
+    for x in [300]:
         print(x)
         train, valid = idrid_dataset.get_data_loader_2_classes(path, data_lebel, x)
-        classificador = model.get_vgg11_binary()
+        classificador = model.get_vgg16_binary()
         criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
         optimizer = torch.optim.Adam(classificador.parameters(), lr=config.LR)
 
@@ -80,21 +80,26 @@ def do_binary():
         plt.ylabel('Loss')
         plt.legend()
         plt.show()
-        test_model_4(classificador, x)
+        test_model_2(classificador, x)
         torch.save(classificador.state_dict(), 'models/experimento_1_classes' + str(x) + '.pt')
 
 
 def do_mc():
     path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
-    data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
-    class_weights = idrid_dataset.get_weight(data_lebel, n_classes=4)
-    train, valid = idrid_dataset.get_data_loader_4_classes(path, data_lebel, 1024)
 
-    for x in [512, 1024]:
+
+    for x in [1024]:
         print(x)
-        classificador = model.get_iv3_mc()
+        data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
+        class_weights = idrid_dataset.get_weight(data_lebel, n_classes=4, graph=True)
+
+        train, valid = idrid_dataset.get_data_loader_4_classes(path, data_lebel, x)
+
+        classificador = model.get_vgg16_mc()
         criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
         optimizer = torch.optim.Adam(classificador.parameters(), lr=config.LR)
+
+        print(train)
 
         train_losses, valid_losses = run.optimize(train, valid, classificador, criterion, optimizer, config.EPOCHS)
 
@@ -111,4 +116,10 @@ def do_mc():
 
 
 if __name__ == '__main__':
-    do_binary()
+    data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
+    data_augmentation = pd.read_csv('augmentation_test.csv')
+    class_weights = idrid_dataset.get_weight(data_lebel, n_classes=0, graph=True, data_aug=data_augmentation)
+    #data = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
+    #path = '/home/thiago/PycharmProjects/datasets/IDRI_teste/500/train/'
+    #idrid_dataset.do_augmentation(data, path)
+    #do_mc()

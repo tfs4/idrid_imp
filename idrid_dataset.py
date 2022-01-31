@@ -9,10 +9,63 @@ from torch.utils.data import (
 )
 import config
 import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from skimage.io import imread
+from tqdm import tqdm
 
 IMAGE_SIZE = 28
 
 
+from skimage.transform import rotate
+from skimage.util import random_noise
+
+
+
+def do_augmentation(data, path):
+
+    max = data['level'].value_counts().max()
+
+    augmentation = {}
+    augmentation_cnt = {}
+    for index, value in data['level'].value_counts().items():
+        augmentation[index] = max - value
+        augmentation_cnt[index] = 0
+    print(augmentation)
+    print(augmentation_cnt)
+
+
+    imgs = []
+    for img_name in tqdm(data['id_code']):
+        image_path =  path+ img_name + '.jpg'
+        img = imread(image_path)
+        img = img / 255
+        imgs.append(img)
+
+    x = np.array(imgs)
+    y = data['level'].values
+
+    augmentation_dict = {}
+    for i in tqdm(range(x.shape[0])):
+        if augmentation[y[i]] > augmentation_cnt[y[i]]:
+            plt.imsave('augmentation/1_' + str(i) + '_augmentation.jpg', rotate(x[i], angle=45, mode='wrap'))
+            plt.imsave('augmentation/2_' + str(i) + '_augmentation.jpg', rotate(x[i], angle=45, mode='wrap'))
+            plt.imsave('augmentation/3_' + str(i) + '_augmentation.jpg', np.fliplr(x[i]))
+            plt.imsave('augmentation/4_' + str(i) + '_augmentation.jpg', np.flipud(x[i]))
+            plt.imsave('augmentation/5_' + str(i) + '_augmentation.jpg', random_noise(x[i], var=0.2 ** 2))
+
+            augmentation_dict['1_' + str(i) + '_augmentation.jpg'] = y[i]
+            augmentation_dict['2_' + str(i) + '_augmentation.jpg'] = y[i]
+            augmentation_dict['3_' + str(i) + '_augmentation.jpg'] = y[i]
+            augmentation_dict['4_' + str(i) + '_augmentation.jpg'] = y[i]
+            augmentation_dict['5_' + str(i) + '_augmentation.jpg'] = y[i]
+
+            augmentation_cnt[y[i]] = augmentation_cnt[y[i]] + 5
+
+    data_items = augmentation_dict.items()
+    data_list = list(data_items)
+    df = pd.DataFrame(data_list, columns=['id_code', 'level'])
+    df.to_csv('augmentation_test.csv', index=False)
 
 
 
@@ -47,7 +100,14 @@ class dataset(Dataset):
             return image  # If train != True, return image.
 
 
-def get_weight(data_lebel, n_classes=2):
+def get_weight(data_lebel, n_classes=2, graph=False, data_aug=None):
+    if n_classes == 0:
+
+        data_lebel = data_lebel.reset_index()
+        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1, 2, 3, 4]),
+                                                          y=data_lebel['level'].values)
+        class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+
     if n_classes == 2:
         data_lebel["level"].replace({2: 1, 3: 1, 4: 1}, inplace=True)
         data_lebel = data_lebel.reset_index()
@@ -61,6 +121,28 @@ def get_weight(data_lebel, n_classes=2):
         data_lebel = data_lebel.reset_index()
         class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1, 2, 3]), y=data_lebel['level'].values)
         class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+
+
+    if graph:
+
+
+        ax = data_lebel['level'].value_counts().plot(kind='bar',
+                                            figsize=(14, 8),
+                                            title="Class")
+        ax.set_xlabel("Levels")
+        ax.set_ylabel("Frequency")
+        plt.show()
+
+    if not (data_aug is None):
+        df_row = pd.concat([data_lebel, data_aug])
+
+        ax = df_row['level'].value_counts().plot(kind='bar',
+                                                     figsize=(14, 8),
+                                                     title="Class")
+        ax.set_xlabel("Levels")
+        ax.set_ylabel("Frequency")
+        plt.show()
+
     return class_weights
 
 
@@ -119,9 +201,11 @@ def get_data_loader_4_classes(path, data_lebel, size):
     data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
     data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
     train_df = data_lebel.reset_index()
+
+
     data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
 
-    train_size = int(0.8 * len(data_set))
+    train_size = int(0.9 * len(data_set))
     val_size = len(data_set) - train_size
 
     train_set, valid_set = torch.utils.data.random_split(data_set, [train_size, val_size],
