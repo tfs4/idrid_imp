@@ -98,53 +98,51 @@ def do_mc():
     path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
 
 
-    for x in [512]:
-        print(x)
+    x = 512
 
-        data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
-
-        data_augmentation = pd.read_csv('augmentation.csv')
-
-        class_weights = idrid_dataset.get_weight(data_lebel, n_classes=4, graph=True, data_aug=data_augmentation)
+    data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
+    data_augmentation = pd.read_csv('augmentation.csv')
+    class_weights = idrid_dataset.get_weight(data_lebel, n_classes=4, graph=True, data_aug=data_augmentation)
 
 
-        train, valid = idrid_dataset.get_data_loader_4_classes(path, data_lebel, x, aug = data_augmentation,  aug_path='augmentation')
+    train, valid = idrid_dataset.get_data_loader_4_classes(path, data_lebel, x, aug = data_augmentation,  aug_path='augmentation')
 
 
 
-        classificador = model.get_densenet121_mc()
-        #path_loader = torch.load('models/experimento_1_classes512.pt')
-        #classificador.load_state_dict(path_loader)
+    classificador = model.get_densenet121_mc()
+    #path_loader = torch.load('models/model_mcpt')
+    #classificador.load_state_dict(path_loader)
 
 
 
-        criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
-        optimizer = torch.optim.Adam(classificador.parameters(), lr=config.LR)
+    criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
+    optimizer = torch.optim.Adam(classificador.parameters(), lr=config.LR)
 
-        print(train)
+    print(train)
 
-        train_losses, valid_losses = run.optimize(train, valid, classificador, criterion, optimizer, config.EPOCHS)
+    train_losses, valid_losses = run.optimize(train, valid, classificador, criterion, optimizer, config.EPOCHS)
 
-        epochs = range(config.EPOCHS)
-        plt.plot(epochs, train_losses, 'g', label='Training loss')
-        plt.plot(epochs, valid_losses, 'b', label='validation loss')
-        plt.title('Training and Validation loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.show()
-        test_model_4(classificador, x)
-        torch.save(classificador.state_dict(), 'models/experimento_1_classes' + str(x) + '.pt')
+    epochs = range(config.EPOCHS)
+    plt.plot(epochs, train_losses, 'g', label='Training loss')
+    plt.plot(epochs, valid_losses, 'b', label='validation loss')
+    plt.title('Training and Validation loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+    test_model_4(classificador, x)
+    torch.save(classificador.state_dict(), 'models/experimento_1_classes' + str(x) + '.pt')
 
 
 if __name__ == '__main__':
-    do_binary()
+    #do_binary()
 
 
-    #do_mc()
+    #
     #data = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
     #path = '/home/thiago/PycharmProjects/datasets/IDRI_teste/500/train/'
     #idrid_dataset.do_augmentation(data, path)
+    do_mc()
 
 '''
     # binary test
@@ -155,7 +153,7 @@ if __name__ == '__main__':
 
     #mc test
     classificador = model.get_densenet121_mc()
-    path_loader = torch.load('models/mc/experimento_1_classes512.pt')
+    path_loader = torch.load('models/mc/model_mc.pt')
     classificador.load_state_dict(path_loader)
     test_model_4(classificador, 512)
 '''

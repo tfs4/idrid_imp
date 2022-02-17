@@ -1,4 +1,4 @@
 LR = 0.0001
 BATCH = 15
 EPOCHS = 70
-img_size = 1024
+img_size = 512
