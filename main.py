@@ -110,8 +110,6 @@ def do_mc():
 
 
     classificador = model.get_densenet121_mc()
-    #path_loader = torch.load('models/model_mc.pt')
-    #classificador.load_state_dict(path_loader)
 
 
 
@@ -138,13 +136,12 @@ if __name__ == '__main__':
     #do_binary()
 
 
-    #
     #data = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
     #path = '/home/thiago/PycharmProjects/datasets/IDRI_teste/500/train/'
     #idrid_dataset.do_augmentation(data, path)
-    do_mc()
+   # do_mc()
 
-'''
+
     # binary test
     classificador = model.get_densenet121_2_classes()
     path_loader = torch.load('models/binary/model_binary.pt')
@@ -156,7 +153,7 @@ if __name__ == '__main__':
     path_loader = torch.load('models/mc/model_mc.pt')
     classificador.load_state_dict(path_loader)
     test_model_4(classificador, 512)
-'''
+
 
 
 
