@@ -110,7 +110,7 @@ def do_mc():
 
 
     classificador = model.get_densenet121_mc()
-    #path_loader = torch.load('models/model_mcpt')
+    #path_loader = torch.load('models/model_mc.pt')
     #classificador.load_state_dict(path_loader)
 
 
