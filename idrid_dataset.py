@@ -23,7 +23,7 @@ from skimage.util import random_noise
 
 
 
-def do_augmentation(data, path):
+def do_augmentation(data, path, ext='.jpg', file_name='augmentation.csv', dir='augmentation'):
 
     max = data['level'].value_counts().max()
 
@@ -38,7 +38,7 @@ def do_augmentation(data, path):
 
     imgs = []
     for img_name in tqdm(data['id_code']):
-        image_path =  path+ img_name + '.jpg'
+        image_path =  path+ img_name + ext
         img = imread(image_path)
         img = img / 255
         imgs.append(img)
@@ -49,11 +49,11 @@ def do_augmentation(data, path):
     augmentation_dict = {}
     for i in tqdm(range(x.shape[0])):
         if augmentation[y[i]] > augmentation_cnt[y[i]]:
-            plt.imsave('augmentation/1_' + str(i) + '_augmentation.jpg', rotate(x[i], angle=45, mode='wrap'))
-            plt.imsave('augmentation/2_' + str(i) + '_augmentation.jpg', rotate(x[i], angle=45, mode='wrap'))
-            plt.imsave('augmentation/3_' + str(i) + '_augmentation.jpg', np.fliplr(x[i]))
-            plt.imsave('augmentation/4_' + str(i) + '_augmentation.jpg', np.flipud(x[i]))
-            plt.imsave('augmentation/5_' + str(i) + '_augmentation.jpg', random_noise(x[i], var=0.2 ** 2))
+            plt.imsave(dir+'/1_' + str(i) + '_augmentation'+ext, rotate(x[i], angle=45, mode='wrap'))
+            plt.imsave(dir+'/2_' + str(i) + '_augmentation'+ext, rotate(x[i], angle=45, mode='wrap'))
+            plt.imsave(dir+'/3_' + str(i) + '_augmentation'+ext, np.fliplr(x[i]))
+            plt.imsave(dir+'/4_' + str(i) + '_augmentation'+ext, np.flipud(x[i]))
+            plt.imsave(dir+'/5_' + str(i) + '_augmentation'+ext, random_noise(x[i], var=0.2 ** 2))
 
             augmentation_dict['1_' + str(i) + '_augmentation'] = y[i]
             augmentation_dict['2_' + str(i) + '_augmentation'] = y[i]
@@ -66,7 +66,7 @@ def do_augmentation(data, path):
     data_items = augmentation_dict.items()
     data_list = list(data_items)
     df = pd.DataFrame(data_list, columns=['id_code', 'level'])
-    df.to_csv('augmentation.csv', index=False)
+    df.to_csv(file_name, index=False)
 
 
 
@@ -235,6 +235,20 @@ def get_data_loader_4_classes(path, data_lebel, size, aug = None,  aug_path=None
 
     return train, valid
 
+
+
+def get_test_final(path, data_lebel, size):
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+    data_lebel["level"].replace({1: 0, 2: 1, 3: 2, 4: 3}, inplace=True)
+
+    data_lebel = data_lebel.reset_index()
+    data_set = dataset(data_lebel, f'{path}test', image_transform=test_transform)
+    test = DataLoader(data_set, batch_size=config.BATCH, shuffle=False)
+    return test
 
 
 
