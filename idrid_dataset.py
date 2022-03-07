@@ -102,6 +102,19 @@ class dataset(Dataset):
 
 
 def get_weight(data_lebel, n_classes=2, graph=False, data_aug=None):
+    if n_classes == -3:
+        if not (data_aug is None):
+            data_lebel = pd.concat([data_lebel, data_aug])
+
+        data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+        data_lebel.drop(data_lebel.loc[data_lebel['level'] == 1].index, inplace=True)
+
+        data_lebel["level"].replace({2: 0, 3: 1, 4: 2 }, inplace=True)
+        data_lebel = data_lebel.reset_index()
+        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1, 2]),
+                                                          y=data_lebel['level'].values)
+        class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+
     if n_classes == 0:
 
         data_lebel = data_lebel.reset_index()
@@ -115,6 +128,13 @@ def get_weight(data_lebel, n_classes=2, graph=False, data_aug=None):
         class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1]),
                                                           y=data_lebel['level'].values)
         class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+    if n_classes == 3:
+        data_lebel["level"].replace({3: 2, 4: 2}, inplace=True)
+        data_lebel = data_lebel.reset_index()
+        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.array([0, 1, 2]),
+                                                          y=data_lebel['level'].values)
+        class_weights = torch.tensor(class_weights, dtype=torch.float).to(config.DEVICE)
+
     if n_classes == 4:
 
         if not (data_aug is None):
@@ -169,6 +189,27 @@ def get_dataset(path, data_lebel):
 
 
 
+def get_data_loader_3_classes(path, data_lebel, size):
+
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+
+    data_lebel["level"].replace({ 3: 2, 4: 2}, inplace=True)
+    train_df = data_lebel.reset_index()
+    data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
+
+    train_size = int(0.8 * len(data_set))
+    val_size = len(data_set) - train_size
+
+    train_set, valid_set = torch.utils.data.random_split(data_set, [train_size, val_size],
+                                                         generator=torch.Generator().manual_seed(42))
+    train = DataLoader(train_set, batch_size=config.BATCH, shuffle=True)
+    valid = DataLoader(valid_set, batch_size=config.BATCH, shuffle=False)
+
+    return train, valid
+
 
 
 def get_data_loader_2_classes(path, data_lebel, size):
@@ -183,6 +224,53 @@ def get_data_loader_2_classes(path, data_lebel, size):
     data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
 
     train_size = int(0.8 * len(data_set))
+    val_size = len(data_set) - train_size
+
+    train_set, valid_set = torch.utils.data.random_split(data_set, [train_size, val_size],
+                                                         generator=torch.Generator().manual_seed(42))
+    train = DataLoader(train_set, batch_size=config.BATCH, shuffle=True)
+    valid = DataLoader(valid_set, batch_size=config.BATCH, shuffle=False)
+
+    return train, valid
+
+
+
+def get_data_loader_3_last_classes(path, data_lebel, size, aug = None,  aug_path=None):
+
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 1].index, inplace=True)
+
+
+    data_lebel["level"].replace({2: 0, 3: 1, 4: 2}, inplace=True)
+
+
+    aug.drop(aug.loc[aug['level'] == 0].index, inplace=True)
+    aug.drop(aug.loc[aug['level'] == 1].index, inplace=True)
+
+    aug["level"].replace({2: 0, 3: 1, 4: 2}, inplace=True)
+
+    data_lebel.reset_index(inplace=True)
+    aug.reset_index(inplace=True)
+
+    #train_df = pd.concat([data_lebel, aug])
+
+
+    data_set = dataset(data_lebel, f'{path}train', image_transform=test_transform)
+
+    data_set_aug = dataset(aug, f'{aug_path}', image_transform=test_transform)
+
+
+    data_set = ConcatDataset([data_set_aug, data_set])
+
+
+
+
+    train_size = int(0.9 * len(data_set))
     val_size = len(data_set) - train_size
 
     train_set, valid_set = torch.utils.data.random_split(data_set, [train_size, val_size],
@@ -252,6 +340,24 @@ def get_test_final(path, data_lebel, size):
 
 
 
+
+def get_test_dataset_last_3(path, data_lebel, size):
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 0].index, inplace=True)
+    data_lebel.drop(data_lebel.loc[data_lebel['level'] == 1].index, inplace=True)
+
+    data_lebel["level"].replace({2: 0, 3: 1, 4: 2}, inplace=True)
+
+    data_lebel = data_lebel.reset_index()
+    data_set = dataset(data_lebel, f'{path}test', image_transform=test_transform)
+    test = DataLoader(data_set, batch_size=config.BATCH, shuffle=False)
+    return test
+
+
+
 def get_test_dataset_4_classes(path, data_lebel, size):
     test_transform = transforms.Compose([transforms.Resize([size, size]),
                                          transforms.ToTensor(),
@@ -272,6 +378,18 @@ def get_test_dataset_2_classes(path, data_lebel, size):
                                          transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
                                          ])
     data_lebel["level"].replace({2: 1, 3: 1, 4: 1}, inplace=True)
+    data_lebel = data_lebel.reset_index()
+    data_set = dataset(data_lebel, f'{path}test', image_transform=test_transform)
+    test = DataLoader(data_set, batch_size=config.BATCH, shuffle=False)
+    return test
+
+
+def get_test_dataset_3_classes(path, data_lebel, size):
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                                         ])
+    data_lebel["level"].replace({3: 2, 4: 2}, inplace=True)
     data_lebel = data_lebel.reset_index()
     data_set = dataset(data_lebel, f'{path}test', image_transform=test_transform)
     test = DataLoader(data_set, batch_size=config.BATCH, shuffle=False)

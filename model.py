@@ -11,6 +11,23 @@ random.seed(0)
 torch.manual_seed(0)
 
 
+def get_densenet121_3_classes():
+    densenet121 = models.densenet121(pretrained=True)
+
+    for param in densenet121.parameters():
+        param.requires_grad = False
+
+    densenet121.classifier = nn.Sequential(
+        nn.Linear(1024, 256),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+        nn.Linear(256, 3),
+    )
+    densenet121.cuda()
+
+    return densenet121
+
+
 # best result 83.4
 def get_densenet121_2_classes():
     densenet121 = models.densenet121(pretrained=True)
@@ -23,6 +40,35 @@ def get_densenet121_2_classes():
         nn.ReLU(),
         nn.Dropout(0.4),
         nn.Linear(256, 2),
+    )
+    densenet121.cuda()
+
+    return densenet121
+
+
+def get_densenet121_last_3():
+
+    densenet121 = models.densenet121(pretrained=True)
+
+    for param in densenet121.parameters():
+        param.requires_grad = False
+
+    densenet121.classifier = nn.Sequential(
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+
+
+        nn.Linear(512, 256),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+
+        nn.Linear(256, 256),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+
+
+        nn.Linear(256, 3),
     )
     densenet121.cuda()
 
