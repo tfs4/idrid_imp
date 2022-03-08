@@ -46,6 +46,36 @@ def get_densenet121_2_classes():
     return densenet121
 
 
+def get_vgg_last_3():
+
+    densenet121 = models.inception_v3(pretrained=True)
+
+    for param in densenet121.parameters():
+        param.requires_grad = False
+
+    densenet121.classifier = nn.Sequential(
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+
+
+        nn.Linear(512, 256),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+
+        nn.Linear(256, 256),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+
+
+        nn.Linear(256, 3),
+    )
+    densenet121.cuda()
+
+    return densenet121
+
+
+
 def get_densenet121_last_3():
 
     densenet121 = models.densenet121(pretrained=True)

@@ -24,7 +24,9 @@ def do_3_last_classes():
     class_weights = idrid_dataset.get_weight(data_lebel, n_classes=-3, graph=True, data_aug=data_augmentation)
 
     train, valid = idrid_dataset.get_data_loader_3_last_classes(path, data_lebel, x, aug = data_augmentation,  aug_path='augmentation')
-    classificador = model.get_densenet121_last_3()
+    #classificador = model.get_densenet121_last_3()
+    classificador = model.get_vgg_last_3()
+
     criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
     optimizer = torch.optim.Adam(classificador.parameters(), lr=config.LR)
 
@@ -142,11 +144,18 @@ def test_kaggle_model_2(model, size):
 
 
 
+def test_full_models(model_binary, model_mc, size):
+    path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
+    data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
 
+    test_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/test.csv')
+    data_test = idrid_dataset.get_test_dataset(path, test_lebel, size)
+
+    run.test_full(data_test, model_binary, model_mc)
 
 
 def test_model_2(model, size):
-    path = '/home/thiago/PycharmProjects/datasets/IDRI/300/'
+    path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
     data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
 
     test_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/test.csv')
@@ -253,19 +262,25 @@ if __name__ == '__main__':
 
 
     # binary test
-    #do_3_classes()
+    classificador_binary = model.get_densenet121_2_classes()
+    path_loader = torch.load('models/binary/model_binary.pt')
+    classificador_binary.load_state_dict(path_loader)
 
-    #classificador = model.get_densenet121_2_classes()
-    #path_loader = torch.load('models/binary/model_binary.pt')
-    #classificador.load_state_dict(path_loader)
+    classificador_mc = model.get_densenet121_mc()
+    path_loader = torch.load('models/mc/model_mc.pt')
+    classificador_mc.load_state_dict(path_loader)
+
+    test_full_models(classificador_binary, classificador_mc, 1024)
     #test_model_2(classificador, 1024)
 
 
+
+
     #do_3_last_classes()
-    classificador = model.get_densenet121_last_3()
-    path_loader = torch.load('models/experimento_1_classes1024.pt')
-    classificador.load_state_dict(path_loader)
-    test_model_3_last(classificador, 1024)
+    #classificador = model.get_densenet121_last_3()
+    #path_loader = torch.load('models/experimento_1_classes1024.pt')
+    #classificador.load_state_dict(path_loader)
+    #test_model_3_last(classificador, 1024)
 
     #mc test
     #classificador = model.get_densenet121_mc()

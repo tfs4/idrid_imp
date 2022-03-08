@@ -372,6 +372,8 @@ def get_test_dataset_4_classes(path, data_lebel, size):
     return test
 
 
+
+
 def get_test_dataset_2_classes(path, data_lebel, size):
     test_transform = transforms.Compose([transforms.Resize([size, size]),
                                          transforms.ToTensor(),
@@ -396,8 +398,8 @@ def get_test_dataset_3_classes(path, data_lebel, size):
     return test
 
 
-def get_test_dataset(path, data_lebel):
-    test_transform = transforms.Compose([transforms.Resize([500, 500]),
+def get_test_dataset(path, data_lebel, size):
+    test_transform = transforms.Compose([transforms.Resize([size, size]),
                                          transforms.ToTensor(),
                                          transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
                                          ])
