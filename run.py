@@ -83,22 +83,23 @@ def optimize(train_dataloader, valid_dataloader, model, loss_fn, optimizer, nb_e
 
 
 def join_results(binary, mc):
-    for elem in np.where(binary == 1):
-        binary[elem] = mc[elem]
+    for i in np.where(binary == 1):
+        binary[i] = mc[i]+1
         return binary
 
-def test_full(dataloader, model_binario, model_mc):
+def test_full(dataloader_binary, dataloader_mc, model_binario, model_mc):
     y_true_tensor = torch.tensor([]).cuda()
     y_pred_tensor = torch.tensor([]).cuda()
 
     model_binario.eval()  # Sets the model for evaluation.
+    model_mc.eval()
 
     total = 0
     correct = 0
 
     with torch.no_grad():  # No need to calculate the gradients.
 
-        for x, y in dataloader:
+        for x, y in dataloader_binary:
             output_binary = model_binario(x.to(config.DEVICE))
             output_mc = model_mc(x.to(config.DEVICE))
 
