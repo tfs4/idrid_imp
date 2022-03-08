@@ -98,10 +98,12 @@ def test_full(dataloader_binary, dataloader_mc, model_binario, model_mc):
     correct = 0
 
     with torch.no_grad():  # No need to calculate the gradients.
-
+        mc_inter = iter(dataloader_mc)
         for x, y in dataloader_binary:
+            x_mc, y_mc = next(mc_inter)
+
             output_binary = model_binario(x.to(config.DEVICE))
-            output_mc = model_mc(x.to(config.DEVICE))
+            output_mc = model_mc(x_mc.to(config.DEVICE))
 
 
             total += y.size(0)

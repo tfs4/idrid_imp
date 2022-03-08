@@ -150,7 +150,7 @@ def test_full_models(model_binary, model_mc, size):
 
     test_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/test.csv')
     data_test_binary = idrid_dataset.get_test_dataset(path, test_lebel, 1024)
-    data_test_mc = idrid_dataset.get_test_dataset(path, test_lebel, 1024)
+    data_test_mc = idrid_dataset.get_test_dataset(path, test_lebel, 512)
 
     run.test_full(data_test_binary, data_test_mc, model_binary, model_mc)
 
@@ -271,9 +271,8 @@ if __name__ == '__main__':
     path_loader = torch.load('models/mc/model_mc.pt')
     classificador_mc.load_state_dict(path_loader)
 
-    test_model_2(classificador_binary, 1024)
-    test_model_4(classificador_mc, 512)
-
+    #test_model_2(classificador_binary, 1024)
+    #test_model_4(classificador_mc, 512)
     test_full_models(classificador_binary, classificador_mc, 1024)
     #test_model_2(classificador, 1024)
 
