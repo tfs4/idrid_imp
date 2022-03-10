@@ -82,12 +82,66 @@ def optimize(train_dataloader, valid_dataloader, model, loss_fn, optimizer, nb_e
     return train_losses, valid_losses
 
 
-def join_results(binary, mc):
-    for i in np.where(binary == 1):
-        binary[i] = mc[i]+1
+def join_results(binary, mc, limit):
+    for i in np.where(binary == limit):
+        binary[i] = mc[i]+limit
         return binary
 
-def test_full(dataloader_binary, dataloader_mc, model_binario, model_mc):
+def test_full(dataloader_binary, dataloader_mc, model_binario, model_mc, limit):
+    y_true_tensor = torch.tensor([]).cuda()
+    y_pred_tensor = torch.tensor([]).cuda()
+
+    model_binario.eval()  # Sets the model for evaluation.
+    model_mc.eval()
+
+    total = 0
+    correct = 0
+
+    with torch.no_grad():  # No need to calculate the gradients.
+        mc_inter = iter(dataloader_mc)
+        for x, y in dataloader_binary:
+            x_mc, y_mc = next(mc_inter)
+
+            output_binary = model_binario(x.to(config.DEVICE))
+            output_mc = model_mc(x_mc.to(config.DEVICE))
+
+
+            total += y.size(0)
+            predictions_binary = output_binary.argmax(dim=1).cpu().detach()
+            predictions_mc     = output_mc.argmax(dim=1).cpu().detach()
+
+            t = predictions_binary.detach().numpy()
+            t2 = predictions_mc.detach().numpy()
+
+            pred = torch.tensor(np.apply_along_axis(join_results, 0, t, t2, limit))
+
+            correct += (pred == y.cpu().detach()).sum().item()
+
+            y_true_tensor = torch.cat((y_true_tensor, y.to(config.DEVICE)))
+            y_pred_tensor = torch.cat((y_pred_tensor, pred.to(config.DEVICE)))
+
+        print(f'Accuracy on Test set = {100 * (correct / total):.6f}% [{correct}/{total}]')  # Prints the Accuracy.
+
+        from sklearn.metrics import confusion_matrix
+        from sklearn.metrics import classification_report
+        y_true = y_true_tensor.tolist()
+        y_pred = y_pred_tensor.tolist()
+        matrix = confusion_matrix(y_true, y_pred)
+
+        df_cm = pd.DataFrame(matrix, range(matrix.shape[0]), range(matrix.shape[0]))
+        # plt.figure(figsize=(10,7))
+        sn.set(font_scale=1.4)  # for label size
+        sn.heatmap(df_cm, annot=True, annot_kws={"size": 16})  # font size
+
+        plt.show()
+
+        print(matrix)
+
+        classify_report = classification_report(y_true, y_pred)
+        print(classify_report)
+
+
+def test_full_3_classes(dataloader_binary, dataloader_mc, model_binario, model_mc):
     y_true_tensor = torch.tensor([]).cuda()
     y_pred_tensor = torch.tensor([]).cuda()
 
@@ -139,8 +193,6 @@ def test_full(dataloader_binary, dataloader_mc, model_binario, model_mc):
 
         classify_report = classification_report(y_true, y_pred)
         print(classify_report)
-
-
 
 
 

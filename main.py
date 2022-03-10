@@ -24,8 +24,8 @@ def do_3_last_classes():
     class_weights = idrid_dataset.get_weight(data_lebel, n_classes=-3, graph=True, data_aug=data_augmentation)
 
     train, valid = idrid_dataset.get_data_loader_3_last_classes(path, data_lebel, x, aug = data_augmentation,  aug_path='augmentation')
-    #classificador = model.get_densenet121_last_3()
-    classificador = model.get_vgg_last_3()
+    classificador = model.get_densenet121_last_3()
+
 
     criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
     optimizer = torch.optim.Adam(classificador.parameters(), lr=config.LR)
@@ -48,9 +48,11 @@ def do_3_last_classes():
 def do_3_classes():
     path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
     data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
-    class_weights = idrid_dataset.get_weight(data_lebel, n_classes=3)
+    data_augmentation = pd.read_csv('augmentation.csv')
+
+    class_weights = idrid_dataset.get_weight(data_lebel, n_classes=3, data_aug=data_augmentation)
     x = 1024
-    train, valid = idrid_dataset.get_data_loader_3_classes(path, data_lebel, x)
+    train, valid = idrid_dataset.get_data_loader_3_classes(path, data_lebel, x, aug = data_augmentation,  aug_path='augmentation')
     classificador = model.get_densenet121_3_classes()
 
 
@@ -144,7 +146,8 @@ def test_kaggle_model_2(model, size):
 
 
 
-def test_full_models(model_binary, model_mc, size):
+
+def test_full_models_3_classes(model_binary, model_mc):
     path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
     data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
 
@@ -153,6 +156,17 @@ def test_full_models(model_binary, model_mc, size):
     data_test_mc = idrid_dataset.get_test_dataset(path, test_lebel, 512)
 
     run.test_full(data_test_binary, data_test_mc, model_binary, model_mc)
+
+
+def test_full_models(model_binary, model_mc, limit):
+    path = '/home/thiago/PycharmProjects/datasets/IDRI/500/'
+    data_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/train.csv')
+
+    test_lebel = pd.read_csv('/home/thiago/PycharmProjects/datasets/IDRI/test.csv')
+    data_test_binary = idrid_dataset.get_test_dataset(path, test_lebel, 1024)
+    data_test_mc = idrid_dataset.get_test_dataset(path, test_lebel, 1024)
+
+    run.test_full(data_test_binary, data_test_mc, model_binary, model_mc, limit)
 
 
 def test_model_2(model, size):
@@ -248,6 +262,21 @@ def do_kaggle_binary():
 
 
 if __name__ == '__main__':
+    #do_3_classes()
+    #do_3_last_classes()
+
+    classificador_first = model.get_densenet121_3_classes()
+    path_loader = torch.load('models/3_first_classes/experimento_3_classes1024.pt')
+    classificador_first.load_state_dict(path_loader)
+
+    classificador_last = model.get_densenet121_last_3()
+    path_loader = torch.load('models/3_lasts_classes/experimento_1_classes1024.pt')
+    classificador_last.load_state_dict(path_loader)
+
+    test_model_3(classificador_first, 1024)
+    test_model_3_last(classificador_last, 1024)
+    test_full_models(classificador_first, classificador_last, 2)
+''''''
    #do_kaggle_binary()
    #classificador = model.get_densenet121_2_classes()
    #path_loader = torch.load('models/kaggle_no_agumentation.pt')
@@ -261,7 +290,7 @@ if __name__ == '__main__':
     #idrid_dataset.do_augmentation(data, path)
     #do_mc()
 
-
+'''
     # binary test
     classificador_binary = model.get_densenet121_2_classes()
     path_loader = torch.load('models/binary/model_binary.pt')
@@ -273,13 +302,13 @@ if __name__ == '__main__':
 
     #test_model_2(classificador_binary, 1024)
     #test_model_4(classificador_mc, 512)
-    test_full_models(classificador_binary, classificador_mc, 1024)
+    test_full_models(classificador_binary, classificador_mc, 1)
     #test_model_2(classificador, 1024)
+'''
 
 
 
 
-    #do_3_last_classes()
     #classificador = model.get_densenet121_last_3()
     #path_loader = torch.load('models/experimento_1_classes1024.pt')
     #classificador.load_state_dict(path_loader)

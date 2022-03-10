@@ -189,14 +189,16 @@ def get_dataset(path, data_lebel):
 
 
 
-def get_data_loader_3_classes(path, data_lebel, size):
+
+
+def get_data_loader_2_classes(path, data_lebel, size):
 
     test_transform = transforms.Compose([transforms.Resize([size, size]),
                                          transforms.ToTensor(),
                                          transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
                                          ])
 
-    data_lebel["level"].replace({ 3: 2, 4: 2}, inplace=True)
+    data_lebel["level"].replace({2: 1, 3: 1, 4: 1}, inplace=True)
     train_df = data_lebel.reset_index()
     data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
 
@@ -212,16 +214,26 @@ def get_data_loader_3_classes(path, data_lebel, size):
 
 
 
-def get_data_loader_2_classes(path, data_lebel, size):
+def get_data_loader_3_classes(path, data_lebel, size, aug = None,  aug_path=None):
 
     test_transform = transforms.Compose([transforms.Resize([size, size]),
                                          transforms.ToTensor(),
                                          transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
                                          ])
 
-    data_lebel["level"].replace({2: 1, 3: 1, 4: 1}, inplace=True)
+    data_lebel["level"].replace({ 3: 2, 4: 2}, inplace=True)
+    aug["level"].replace({ 3: 2, 4: 2}, inplace=True)
+
+
     train_df = data_lebel.reset_index()
     data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
+
+    data_lebel.reset_index(inplace=True)
+    aug.reset_index(inplace=True)
+
+    data_set = dataset(data_lebel, f'{path}train', image_transform=test_transform)
+    data_set_aug = dataset(aug, f'{aug_path}', image_transform=test_transform)
+    data_set = ConcatDataset([data_set_aug, data_set])
 
     train_size = int(0.8 * len(data_set))
     val_size = len(data_set) - train_size
@@ -261,13 +273,8 @@ def get_data_loader_3_last_classes(path, data_lebel, size, aug = None,  aug_path
 
 
     data_set = dataset(data_lebel, f'{path}train', image_transform=test_transform)
-
     data_set_aug = dataset(aug, f'{aug_path}', image_transform=test_transform)
-
-
     data_set = ConcatDataset([data_set_aug, data_set])
-
-
 
 
     train_size = int(0.9 * len(data_set))
