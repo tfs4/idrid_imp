@@ -202,7 +202,7 @@ def get_data_loader_2_classes(path, data_lebel, size):
     train_df = data_lebel.reset_index()
     data_set = dataset(train_df, f'{path}train', image_transform=test_transform)
 
-    train_size = int(0.8 * len(data_set))
+    train_size = int(0.7 * len(data_set))
     val_size = len(data_set) - train_size
 
     train_set, valid_set = torch.utils.data.random_split(data_set, [train_size, val_size],
